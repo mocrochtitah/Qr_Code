@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Bestelling</title>
+  </head>
+  <body>
+    <h1>Welkom!</h1>
+    <p id="orderId"></p>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      document.getElementById("orderId").innerText =
+        id ? "Jouw code is: " + id : "Geen code gevonden";
+    </script>
+  </body>
+</html>
