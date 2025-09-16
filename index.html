@@ -115,7 +115,7 @@ input {
 <div id="queueList"></div>
 
 <script>
-const PI_URL = null //"http://raspberrypi.local:5000"; // Pas aan naar je Pi IP
+const PI_URL = null; // <-- testmodus: Pi niet nodig. Vul je Pi IP in als beschikbaar
 
 // Elementen
 const startScreen = document.getElementById("startScreen");
@@ -199,8 +199,14 @@ function updateQueueDisplay() {
 
 // Bevestiging en info
 function confirmDrink(drinkId, drinkName, info){
+  if(isPouring){
+    alert("Er wordt al een drankje geschonken! Wacht tot het klaar is.");
+    return;
+  }
   if(confirm(`Weet je zeker dat je ${drinkName} wilt schenken?`)){
     drinkInfo.textContent = info;
+    // Alle drankknoppen uitzetten
+    drinkButtons.forEach(btn => btn.disabled = true);
     queueDrink(drinkId, drinkName);
   }
 }
@@ -230,32 +236,36 @@ function processQueue(){
   progressBar.classList.remove('hidden');
   progress.style.width = "0%";
 
-  // Commando naar Pi
-  fetch(`${PI_URL}/pour/${nextDrink.id}`)
-    .then(resp => resp.json())
-    .then(data => console.log("Pi antwoord:", data))
-    .catch(err => {
-      console.error("Fout met Pi:", err);
-      statusText.textContent = "❌ Pi niet bereikbaar";
-      isPouring = false;
-      drinkButtons.forEach(btn => btn.disabled = false);
-      stopBtn.classList.add("hidden");
-      processQueue();
-      return;
-    });
+  // Commando naar Pi (alleen als PI_URL gedefinieerd)
+  if(PI_URL){
+    fetch(`${PI_URL}/pour/${nextDrink.id}`)
+      .then(resp => resp.json())
+      .then(data => console.log("Pi antwoord:", data))
+      .catch(err => {
+        console.error("Fout met Pi:", err);
+        statusText.textContent = "❌ Pi niet bereikbaar";
+      });
+  } else {
+    console.log("Simulatie: Pi niet beschikbaar, voortgang lokaal");
+  }
 
   // Timer + voortgang
   let seconds = 10; // totale schenktijd
   progress.style.width = "0%";
   timerDisplay.textContent = `Klaar in: ${seconds}s`;
+  if(currentInterval) clearInterval(currentInterval);
+  if(currentTimeout) clearTimeout(currentTimeout);
+
   currentInterval = setInterval(()=>{
     seconds--;
-    timerDisplay.textContent = `Klaar in: ${seconds}s`;
-    progress.style.width = `${(10-seconds)*10}%`;
-    if(seconds<=0) clearInterval(currentInterval);
+    if(seconds >= 0){
+      timerDisplay.textContent = `Klaar in: ${seconds}s`;
+      progress.style.width = `${(10-seconds)*10}%`;
+    }
   },1000);
 
   currentTimeout = setTimeout(()=>{
+    clearInterval(currentInterval);
     statusText.textContent = `${nextDrink.name} is klaar! 🍹`;
     timerDisplay.textContent = "";
     progress.style.width = "100%";
@@ -277,16 +287,20 @@ backBtn.addEventListener('click', () => {
 
 // Admin pomp spoelen
 function flushPump(pumpId){
-  fetch(`${PI_URL}/pour/${pumpId}`) // zelfde endpoint, korte duration op Pi
-    .then(resp => resp.json())
-    .then(data => {
-      adminStatus.textContent = `Pomp ${pumpId} gespoeld ✅`;
-      console.log(data);
-    })
-    .catch(err => {
-      adminStatus.textContent = `❌ Fout bij spoelen pomp ${pumpId}`;
-      console.error(err);
-    });
+  if(PI_URL){
+    fetch(`${PI_URL}/pour/${pumpId}`)
+      .then(resp => resp.json())
+      .then(data => {
+        adminStatus.textContent = `Pomp ${pumpId} gespoeld ✅`;
+        console.log(data);
+      })
+      .catch(err => {
+        adminStatus.textContent = `❌ Fout bij spoelen pomp ${pumpId}`;
+        console.error(err);
+      });
+  } else {
+    adminStatus.textContent = `Simulatie: Pomp ${pumpId} gespoeld ✅`;
+  }
 }
 </script>
 </body>
