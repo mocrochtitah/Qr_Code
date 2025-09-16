@@ -1,18 +1,104 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Bestelling</title>
-  </head>
-  <body>
-    <h1>Welkom!</h1>
-    <p id="orderId"></p>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Bartender</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #111;
+      color: #fff;
+    }
+    h1 {
+      margin-top: 20px;
+    }
+    .hidden {
+      display: none;
+    }
+    button {
+      padding: 15px 25px;
+      margin: 10px;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      background: #444;
+      color: #fff;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #666;
+    }
+    #progressBar {
+      margin-top: 20px;
+      width: 80%;
+      height: 30px;
+      background: #333;
+      border-radius: 15px;
+      overflow: hidden;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #progress {
+      height: 100%;
+      width: 0%;
+      background: limegreen;
+      transition: width 0.3s;
+    }
+  </style>
+</head>
+<body>
+  <h1>Smart Bartender 🍸</h1>
+  
+  <!-- Start knop -->
+  <button id="startBtn">Start</button>
+  
+  <!-- Drank opties -->
+  <div id="drinkOptions" class="hidden">
+    <h2>Kies je drankje:</h2>
+    <button onclick="pour('Cola')">Cola</button>
+    <button onclick="pour('Fanta')">Fanta</button>
+    <button onclick="pour('Sprite')">Sprite</button>
+    <button onclick="pour('Whiskey')">Whiskey</button>
+    <button onclick="pour('Vodka')">Vodka</button>
+    <button onclick="pour('Gin')">Gin</button>
+  </div>
+  
+  <!-- Status + Progress bar -->
+  <p id="status"></p>
+  <div id="progressBar" class="hidden">
+    <div id="progress"></div>
+  </div>
 
-    <script>
-      const params = new URLSearchParams(window.location.search);
-      const id = params.get("id");
-      document.getElementById("orderId").innerText =
-        id ? "Jouw code is: " + id : "Geen code gevonden";
-    </script>
-  </body>
+  <script>
+    const startBtn = document.getElementById('startBtn');
+    const drinkOptions = document.getElementById('drinkOptions');
+    const statusText = document.getElementById('status');
+    const progressBar = document.getElementById('progressBar');
+    const progress = document.getElementById('progress');
+
+    startBtn.addEventListener('click', () => {
+      startBtn.classList.add('hidden');
+      drinkOptions.classList.remove('hidden');
+    });
+
+    function pour(drink) {
+      statusText.textContent = `Aan het schenken: ${drink}...`;
+      progressBar.classList.remove('hidden');
+      progress.style.width = "0%";
+
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i >= 100) {
+          clearInterval(interval);
+          statusText.textContent = `${drink} is klaar! 🍹`;
+        } else {
+          i += 5;
+          progress.style.width = i + "%";
+        }
+      }, 200);
+    }
+  </script>
+</body>
 </html>
