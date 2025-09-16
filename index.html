@@ -2,6 +2,7 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Belangrijk voor smartphones -->
   <title>Smart Bartender</title>
   <style>
     body {
@@ -9,19 +10,28 @@
       text-align: center;
       background: #111;
       color: #fff;
+      margin: 0;
+      padding: 20px;
     }
     h1 {
-      margin-top: 20px;
+      margin-top: 10px;
+      font-size: 2rem;
+    }
+    h2 {
+      font-size: 1.5rem;
     }
     .hidden {
       display: none;
     }
     button {
-      padding: 15px 25px;
-      margin: 10px;
-      font-size: 18px;
+      display: block;
+      width: 80%;
+      max-width: 300px;
+      margin: 15px auto;
+      padding: 20px;
+      font-size: 1.4rem;
       border: none;
-      border-radius: 10px;
+      border-radius: 15px;
       cursor: pointer;
       background: #444;
       color: #fff;
@@ -37,10 +47,11 @@
     }
     #progressBar {
       margin-top: 20px;
-      width: 80%;
-      height: 30px;
+      width: 90%;
+      max-width: 400px;
+      height: 35px;
       background: #333;
-      border-radius: 15px;
+      border-radius: 20px;
       overflow: hidden;
       margin-left: auto;
       margin-right: auto;
@@ -51,23 +62,27 @@
       background: limegreen;
       transition: width 0.3s;
     }
+    #status {
+      margin-top: 20px;
+      font-size: 1.3rem;
+    }
   </style>
 </head>
 <body>
   <h1>Smart Bartender 🍸</h1>
   
   <!-- Start knop -->
-  <button id="startBtn">Start</button>
+  <button id="startBtn">🚀 Start</button>
   
   <!-- Drank opties -->
   <div id="drinkOptions" class="hidden">
     <h2>Kies je drankje:</h2>
-    <button onclick="pour('Cola')">Cola</button>
-    <button onclick="pour('Fanta')">Fanta</button>
-    <button onclick="pour('Sprite')">Sprite</button>
-    <button onclick="pour('Whiskey')">Whiskey</button>
-    <button onclick="pour('Vodka')">Vodka</button>
-    <button onclick="pour('Gin')">Gin</button>
+    <button onclick="pour('Cola')">🥤 Cola</button>
+    <button onclick="pour('Fanta')">🥤 Fanta</button>
+    <button onclick="pour('Sprite')">🥤 Sprite</button>
+    <button onclick="pour('Whiskey')">🥃 Whiskey</button>
+    <button onclick="pour('Vodka')">🍸 Vodka</button>
+    <button onclick="pour('Gin')">🍹 Gin</button>
     <br>
     <button id="backBtn">⬅️ Terug</button>
   </div>
