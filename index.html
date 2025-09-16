@@ -182,7 +182,8 @@ setPiBtn.addEventListener("click",()=>{
     if(newIp){PI_URL=newIp; updateCurrentPiIp(); piStatus.textContent=`✅ IP aangepast naar ${PI_URL}`;}
     else piStatus.textContent="⚠️ Vul een geldig IP in";
 });
-  testPiBtn.addEventListener("click",()=>{
+  
+testPiBtn.addEventListener("click",()=>{
     if(!PI_URL){ 
         piStatus.textContent="⚠️ Pi IP is niet ingesteld"; 
         return; 
