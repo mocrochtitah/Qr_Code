@@ -241,13 +241,11 @@ function processQueue(){
     fetch(`${PI_URL}/pour/${nextDrink.id}`)
       .then(resp => resp.json())
       .then(data => console.log("Pi antwoord:", data))
-      .catch(err => {
-        console.error("Fout met Pi:", err);
-        statusText.textContent = "❌ Pi niet bereikbaar";
-      });
-  } else {
-    console.log("Simulatie: Pi niet beschikbaar, voortgang lokaal");
-  }
+      .catch(err => console.error("Fout met Pi:", err));
+} else {
+    // PI_URL niet gedefinieerd, testmodus: geen fetch en geen foutmelding
+    console.log("Testmodus: Pi niet beschikbaar, simulatie lokaal");
+}
 
   // Timer + voortgang
   let seconds = 10; // totale schenktijd
@@ -290,17 +288,12 @@ function flushPump(pumpId){
   if(PI_URL){
     fetch(`${PI_URL}/pour/${pumpId}`)
       .then(resp => resp.json())
-      .then(data => {
-        adminStatus.textContent = `Pomp ${pumpId} gespoeld ✅`;
-        console.log(data);
-      })
-      .catch(err => {
-        adminStatus.textContent = `❌ Fout bij spoelen pomp ${pumpId}`;
-        console.error(err);
-      });
-  } else {
+      .then(data => console.log("Pi antwoord:", data))
+      .catch(err => console.error("Fout met Pi:", err));
+} else {
+    // Testmodus: simulatie
     adminStatus.textContent = `Simulatie: Pomp ${pumpId} gespoeld ✅`;
-  }
+}
 }
 </script>
 </body>
