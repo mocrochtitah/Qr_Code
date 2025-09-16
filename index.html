@@ -5,65 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Smart Bartender</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  background: #111;
-  color: #fff;
-  margin: 0;
-  padding: 20px;
-}
-h1 { font-size: 2rem; margin-top: 10px; }
-h2 { font-size: 1.5rem; }
-.hidden { display: none; }
-button {
-  display: block;
-  width: 80%;
-  max-width: 300px;
-  margin: 10px auto;
-  padding: 20px;
-  font-size: 1.3rem;
-  border: none;
-  border-radius: 15px;
-  cursor: pointer;
-  background: #444;
-  color: #fff;
-  transition: 0.3s;
-}
-button:hover:not(:disabled) { background: #666; }
-button:disabled { background: #222; color: #666; cursor: not-allowed; }
-input {
-  display: block;
-  width: 80%;
-  max-width: 250px;
-  padding: 10px;
-  margin: 10px auto;
-  border-radius: 10px;
-  border: none;
-  font-size: 1.1rem;
-}
-#progressBar {
-  margin-top: 20px;
-  width: 90%;
-  max-width: 400px;
-  height: 35px;
-  background: #333;
-  border-radius: 20px;
-  overflow: hidden;
-  margin-left: auto;
-  margin-right: auto;
-}
-#progress { height: 100%; width: 0%; background: limegreen; transition: width 0.3s; }
-#status { margin-top: 20px; font-size: 1.3rem; }
-#queueList { margin-top: 10px; font-size: 1rem; }
-.drink-info { font-size: 1rem; margin-bottom: 10px; }
-.timer { font-size: 1.2rem; margin-top: 10px; }
+body { font-family: Arial; text-align:center; background:#111; color:#fff; margin:0; padding:20px; }
+h1{font-size:2rem;margin-top:10px;} h2{font-size:1.5rem;} .hidden{display:none;}
+button{display:block;width:80%;max-width:300px;margin:10px auto;padding:20px;font-size:1.3rem;border:none;border-radius:15px;cursor:pointer;background:#444;color:#fff;transition:0.3s;}
+button:hover:not(:disabled){background:#666;} button:disabled{background:#222;color:#666;cursor:not-allowed;}
+input{display:block;width:80%;max-width:250px;padding:10px;margin:10px auto;border-radius:10px;border:none;font-size:1.1rem;}
+#progressBar{margin-top:20px;width:90%;max-width:400px;height:35px;background:#333;border-radius:20px;overflow:hidden;margin-left:auto;margin-right:auto;}
+#progress{height:100%;width:0%;background:limegreen;transition:width 0.3s;}
+#status{margin-top:20px;font-size:1.3rem;}
+#queueList{margin-top:10px;font-size:1rem;}
+.drink-info{font-size:1rem;margin-bottom:10px;}
+.timer{font-size:1.2rem;margin-top:10px;}
 </style>
 </head>
 <body>
 <h1>Smart Bartender 🍸</h1>
 
-<!-- Start scherm: gebruiker/admin -->
+<!-- Start scherm -->
 <div id="startScreen">
   <button id="userBtn">🍹 Gebruiker</button>
   <button id="adminBtn">🔧 Admin</button>
@@ -90,6 +48,13 @@ input {
   <button onclick="flushPump(6)">Spoel Pomp 6</button>
   <button onclick="adminLogout()">⬅️ Logout</button>
   <div id="adminStatus"></div>
+  <hr>
+  <h3>Raspberry Pi instellingen</h3>
+  <p>Huidig Pi IP: <span id="currentPiIp">niet ingesteld</span></p>
+  <input type="text" id="newPiIp" placeholder="Bijv. http://192.168.1.25:5000">
+  <button id="setPiBtn">📌 Stel IP in</button>
+  <button id="testPiBtn">🖥️ Test Pi</button>
+  <p id="piStatus"></p>
 </div>
 
 <!-- Drank opties -->
@@ -106,195 +71,133 @@ input {
   <button id="backBtn">⬅️ Terug</button>
 </div>
 
-<!-- Status + Progress bar -->
+<!-- Status + Progress -->
 <p id="status"></p>
-<div id="progressBar" class="hidden">
-  <div id="progress"></div>
-</div>
+<div id="progressBar" class="hidden"><div id="progress"></div></div>
 <div id="timer" class="timer"></div>
 <div id="queueList"></div>
 
 <script>
-const PI_URL = null; // <-- testmodus: Pi niet nodig. Vul je Pi IP in als beschikbaar
+// Testmodus: Pi niet nodig
+let PI_URL = null; // zet hier je Pi IP in als beschikbaar
 
 // Elementen
-const startScreen = document.getElementById("startScreen");
-const userBtn = document.getElementById("userBtn");
-const adminBtn = document.getElementById("adminBtn");
-const adminLogin = document.getElementById("adminLogin");
-const usernameInput = document.getElementById("username");
-const passwordInput = document.getElementById("password");
-const loginBtn = document.getElementById("loginBtn");
-const loginStatus = document.getElementById("loginStatus");
-const adminPanel = document.getElementById("adminPanel");
-const adminStatus = document.getElementById("adminStatus");
-const adminBackBtn = document.getElementById("adminBackBtn");
-
-const drinkOptions = document.getElementById('drinkOptions');
-const backBtn = document.getElementById('backBtn');
-const statusText = document.getElementById('status');
-const progressBar = document.getElementById('progressBar');
-const progress = document.getElementById('progress');
-const drinkButtons = drinkOptions.querySelectorAll("button:not(#backBtn):not(#stopBtn)");
-const stopBtn = document.getElementById("stopBtn");
-const drinkInfo = document.getElementById("drinkInfo");
-const timerDisplay = document.getElementById("timer");
-const queueList = document.getElementById('queueList');
+const startScreen=document.getElementById("startScreen"), userBtn=document.getElementById("userBtn"), adminBtn=document.getElementById("adminBtn"),
+adminLogin=document.getElementById("adminLogin"), usernameInput=document.getElementById("username"), passwordInput=document.getElementById("password"),
+loginBtn=document.getElementById("loginBtn"), loginStatus=document.getElementById("loginStatus"),
+adminPanel=document.getElementById("adminPanel"), adminStatus=document.getElementById("adminStatus"), adminBackBtn=document.getElementById("adminBackBtn"),
+drinkOptions=document.getElementById('drinkOptions'), backBtn=document.getElementById('backBtn'), statusText=document.getElementById('status'),
+progressBar=document.getElementById('progressBar'), progress=document.getElementById('progress'),
+drinkButtons=drinkOptions.querySelectorAll("button:not(#backBtn):not(#stopBtn)"), stopBtn=document.getElementById("stopBtn"),
+drinkInfo=document.getElementById("drinkInfo"), timerDisplay=document.getElementById("timer"), queueList=document.getElementById('queueList'),
+currentPiIpSpan=document.getElementById("currentPiIp"), newPiIpInput=document.getElementById("newPiIp"), setPiBtn=document.getElementById("setPiBtn"),
+testPiBtn=document.getElementById("testPiBtn"), piStatus=document.getElementById("piStatus");
 
 // Queue
-let drinkQueue = [];
-let isPouring = false;
-let currentInterval = null;
-let currentTimeout = null;
+let drinkQueue=[], isPouring=false, currentInterval=null, currentTimeout=null;
 
-// Startscherm keuzes
-userBtn.addEventListener("click", () => {
-  startScreen.classList.add("hidden");
-  drinkOptions.classList.remove("hidden");
-  updateQueueDisplay();
+// Startscherm
+userBtn.addEventListener("click",()=>{startScreen.classList.add("hidden"); drinkOptions.classList.remove("hidden"); updateQueueDisplay();});
+adminBtn.addEventListener("click",()=>{startScreen.classList.add("hidden"); adminLogin.classList.remove("hidden");});
+adminBackBtn.addEventListener("click",()=>{adminLogin.classList.add("hidden"); startScreen.classList.remove("hidden"); loginStatus.textContent="";});
+loginBtn.addEventListener("click",()=>{
+    const user=usernameInput.value, pass=passwordInput.value;
+    if(user==="admin"&&pass==="admin"){adminLogin.classList.add("hidden"); adminPanel.classList.remove("hidden"); adminStatus.textContent=""; updateCurrentPiIp();}
+    else loginStatus.textContent="❌ Ongeldige login!";
 });
-
-adminBtn.addEventListener("click", () => {
-  startScreen.classList.add("hidden");
-  adminLogin.classList.remove("hidden");
-});
-
-adminBackBtn.addEventListener("click", () => {
-  adminLogin.classList.add("hidden");
-  startScreen.classList.remove("hidden");
-  loginStatus.textContent = "";
-});
-
-loginBtn.addEventListener("click", () => {
-  const user = usernameInput.value;
-  const pass = passwordInput.value;
-  if(user === "admin" && pass === "admin") {
-    adminLogin.classList.add("hidden");
-    adminPanel.classList.remove("hidden");
-    adminStatus.textContent = "";
-  } else {
-    loginStatus.textContent = "❌ Ongeldige login!";
-  }
-});
-
-function adminLogout() {
-  adminPanel.classList.add("hidden");
-  startScreen.classList.remove("hidden");
-}
+function adminLogout(){adminPanel.classList.add("hidden"); startScreen.classList.remove("hidden");}
 
 // Queue systeem
-function queueDrink(drinkId, drinkName){
-  drinkQueue.push({id: drinkId, name: drinkName});
-  updateQueueDisplay();
-  processQueue();
-}
+function queueDrink(drinkId, drinkName){drinkQueue.push({id:drinkId,name:drinkName}); updateQueueDisplay(); processQueue();}
+function updateQueueDisplay(){queueList.textContent = drinkQueue.length===0?"": "Queue: " + drinkQueue.map((d,i)=>`#${i+1} ${d.name}`).join(" → ");}
 
-function updateQueueDisplay() {
-  if(drinkQueue.length === 0){
-    queueList.textContent = "";
-  } else {
-    queueList.innerHTML = "Queue: " + drinkQueue.map((d,i) => `#${i+1} ${d.name}`).join(" → ");
-  }
-}
-
-// Bevestiging en info
-function confirmDrink(drinkId, drinkName, info){
-  if(isPouring){
-    alert("Er wordt al een drankje geschonken! Wacht tot het klaar is.");
-    return;
-  }
-  if(confirm(`Weet je zeker dat je ${drinkName} wilt schenken?`)){
-    drinkInfo.textContent = info;
-    // Alle drankknoppen uitzetten
-    drinkButtons.forEach(btn => btn.disabled = true);
-    queueDrink(drinkId, drinkName);
-  }
+// Drank keuze
+function confirmDrink(drinkId,drinkName,info){
+    if(isPouring){alert("Er wordt al een drankje geschonken! Wacht tot het klaar is."); return;}
+    if(confirm(`Weet je zeker dat je ${drinkName} wilt schenken?`)){
+        drinkInfo.textContent=info;
+        drinkButtons.forEach(btn=>btn.disabled=true);
+        queueDrink(drinkId,drinkName);
+    }
 }
 
 // Stop knop
-stopBtn.addEventListener("click", () => {
-  if(currentInterval) clearInterval(currentInterval);
-  if(currentTimeout) clearTimeout(currentTimeout);
-  statusText.textContent = "Bestelling gestopt ❌";
-  progress.style.width = "0%";
-  timerDisplay.textContent = "";
-  isPouring = false;
-  stopBtn.classList.add("hidden");
-  drinkButtons.forEach(btn => btn.disabled = false);
-  processQueue();
-});
-
-function processQueue(){
-  if(isPouring || drinkQueue.length===0) return;
-  isPouring = true;
-  const nextDrink = drinkQueue.shift();
-  updateQueueDisplay();
-
-  drinkButtons.forEach(btn => btn.disabled = true);
-  stopBtn.classList.remove("hidden");
-  statusText.textContent = `Aan het schenken: ${nextDrink.name}...`;
-  progressBar.classList.remove('hidden');
-  progress.style.width = "0%";
-
-  // Commando naar Pi (alleen als PI_URL gedefinieerd)
-  if(PI_URL){
-    fetch(`${PI_URL}/pour/${nextDrink.id}`)
-      .then(resp => resp.json())
-      .then(data => console.log("Pi antwoord:", data))
-      .catch(err => console.error("Fout met Pi:", err));
-} else {
-    // PI_URL niet gedefinieerd, testmodus: geen fetch en geen foutmelding
-    console.log("Testmodus: Pi niet beschikbaar, simulatie lokaal");
-}
-
-  // Timer + voortgang
-  let seconds = 10; // totale schenktijd
-  progress.style.width = "0%";
-  timerDisplay.textContent = `Klaar in: ${seconds}s`;
-  if(currentInterval) clearInterval(currentInterval);
-  if(currentTimeout) clearTimeout(currentTimeout);
-
-  currentInterval = setInterval(()=>{
-    seconds--;
-    if(seconds >= 0){
-      timerDisplay.textContent = `Klaar in: ${seconds}s`;
-      progress.style.width = `${(10-seconds)*10}%`;
-    }
-  },1000);
-
-  currentTimeout = setTimeout(()=>{
-    clearInterval(currentInterval);
-    statusText.textContent = `${nextDrink.name} is klaar! 🍹`;
-    timerDisplay.textContent = "";
-    progress.style.width = "100%";
-    isPouring = false;
-    stopBtn.classList.add("hidden");
-    drinkButtons.forEach(btn => btn.disabled = false);
+stopBtn.addEventListener("click",()=>{
+    if(currentInterval) clearInterval(currentInterval);
+    if(currentTimeout) clearTimeout(currentTimeout);
+    statusText.textContent="Bestelling gestopt ❌"; progress.style.width="0%"; timerDisplay.textContent="";
+    isPouring=false; stopBtn.classList.add("hidden"); drinkButtons.forEach(btn=>btn.disabled=false);
     processQueue();
-  }, 10000);
-}
-
-backBtn.addEventListener('click', () => {
-  drinkOptions.classList.add('hidden');
-  statusText.textContent = "";
-  progressBar.classList.add('hidden');
-  progress.style.width = "0%";
-  timerDisplay.textContent = "";
-  startScreen.classList.remove('hidden');
 });
 
-// Admin pomp spoelen
+// Process queue
+function processQueue(){
+    if(isPouring || drinkQueue.length===0) return;
+    isPouring=true;
+    const nextDrink=drinkQueue.shift();
+    updateQueueDisplay();
+    drinkButtons.forEach(btn=>btn.disabled=true);
+    stopBtn.classList.remove("hidden");
+    statusText.textContent=`Aan het schenken: ${nextDrink.name}...`;
+    progressBar.classList.remove("hidden"); progress.style.width="0%";
+
+    if(PI_URL){
+        fetch(`${PI_URL}/pour/${nextDrink.id}`).then(r=>r.json()).then(d=>console.log(d)).catch(err=>console.error(err));
+    } else console.log("Testmodus: Pi niet beschikbaar, simulatie lokaal");
+
+    let seconds=10;
+    if(currentInterval) clearInterval(currentInterval);
+    if(currentTimeout) clearTimeout(currentTimeout);
+    timerDisplay.textContent=`Klaar in: ${seconds}s`;
+    currentInterval=setInterval(()=>{
+        seconds--;
+        if(seconds>=0){timerDisplay.textContent=`Klaar in: ${seconds}s`; progress.style.width=`${(10-seconds)*10}%`;}
+    },1000);
+    currentTimeout=setTimeout(()=>{
+        clearInterval(currentInterval);
+        statusText.textContent=`${nextDrink.name} is klaar! 🍹`;
+        timerDisplay.textContent="";
+        progress.style.width="100%";
+        isPouring=false;
+        stopBtn.classList.add("hidden");
+        drinkButtons.forEach(btn=>btn.disabled=false);
+        processQueue();
+    },10000);
+}
+
+backBtn.addEventListener('click',()=>{
+    drinkOptions.classList.add('hidden'); statusText.textContent=""; progressBar.classList.add('hidden'); progress.style.width="0%"; timerDisplay.textContent=""; startScreen.classList.remove('hidden');
+});
+
+// Admin functies
 function flushPump(pumpId){
-  if(PI_URL){
-    fetch(`${PI_URL}/pour/${pumpId}`)
-      .then(resp => resp.json())
-      .then(data => console.log("Pi antwoord:", data))
-      .catch(err => console.error("Fout met Pi:", err));
-} else {
-    // Testmodus: simulatie
-    adminStatus.textContent = `Simulatie: Pomp ${pumpId} gespoeld ✅`;
+    if(PI_URL){fetch(`${PI_URL}/pour/${pumpId}`).then(r=>r.json()).then(d=>console.log(d)).catch(err=>console.error(err));}
+    else adminStatus.textContent=`Simulatie: Pomp ${pumpId} gespoeld ✅`;
 }
-}
+
+// Pi instellingen
+function updateCurrentPiIp(){currentPiIpSpan.textContent=PI_URL?PI_URL:"niet ingesteld";}
+setPiBtn.addEventListener("click",()=>{
+    const newIp=newPiIpInput.value.trim();
+    if(newIp){PI_URL=newIp; updateCurrentPiIp(); piStatus.textContent=`✅ IP aangepast naar ${PI_URL}`;}
+    else piStatus.textContent="⚠️ Vul een geldig IP in";
+});
+  testPiBtn.addEventListener("click",()=>{
+    if(!PI_URL){ 
+        piStatus.textContent="⚠️ Pi IP is niet ingesteld"; 
+        return; 
+    }
+    fetch(`${PI_URL}/ping`)
+        .then(resp=>resp.json())
+        .then(data=>{
+            piStatus.textContent="✅ Pi reageert!";
+            console.log("Pi ping antwoord:", data);
+        })
+        .catch(err=>{
+            piStatus.textContent="❌ Pi niet bereikbaar";
+            console.error(err);
+        });
+});
 </script>
 </body>
 </html>
