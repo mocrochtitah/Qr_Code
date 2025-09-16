@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Belangrijk voor smartphones -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Bartender</title>
   <style>
     body {
@@ -77,12 +77,12 @@
   <!-- Drank opties -->
   <div id="drinkOptions" class="hidden">
     <h2>Kies je drankje:</h2>
-    <button onclick="pour('Cola')">🥤 Cola</button>
-    <button onclick="pour('Fanta')">🥤 Fanta</button>
-    <button onclick="pour('Sprite')">🥤 Sprite</button>
-    <button onclick="pour('Whiskey')">🥃 Whiskey</button>
-    <button onclick="pour('Vodka')">🍸 Vodka</button>
-    <button onclick="pour('Gin')">🍹 Gin</button>
+    <button onclick="pour(1, 'Cola')">🥤 Cola</button>
+    <button onclick="pour(2, 'Fanta')">🥤 Fanta</button>
+    <button onclick="pour(3, 'Sprite')">🥤 Sprite</button>
+    <button onclick="pour(4, 'Whiskey')">🥃 Whiskey</button>
+    <button onclick="pour(5, 'Vodka')">🍸 Vodka</button>
+    <button onclick="pour(6, 'Gin')">🍹 Gin</button>
     <br>
     <button id="backBtn">⬅️ Terug</button>
   </div>
@@ -94,6 +94,8 @@
   </div>
 
   <script>
+    const PI_URL = "http://raspberrypi.local:5000"; // <-- vervang indien nodig met je Pi IP-adres
+
     const startBtn = document.getElementById('startBtn');
     const drinkOptions = document.getElementById('drinkOptions');
     const statusText = document.getElementById('status');
@@ -115,20 +117,34 @@
       startBtn.classList.remove('hidden');
     });
 
-    function pour(drink) {
+    function pour(drinkId, drinkName) {
       // Zet alle drankknoppen uit
       drinkButtons.forEach(btn => btn.disabled = true);
 
-      statusText.textContent = `Aan het schenken: ${drink}...`;
+      statusText.textContent = `Aan het schenken: ${drinkName}...`;
       progressBar.classList.remove('hidden');
       progress.style.width = "0%";
 
+      // Stuur commando naar Raspberry Pi
+      fetch(`${PI_URL}/pour/${drinkId}`)
+        .then(response => response.json())
+        .then(data => {
+          console.log("Antwoord van Pi:", data);
+        })
+        .catch(err => {
+          console.error("Fout bij verbinden met Pi:", err);
+          statusText.textContent = "❌ Fout: kon Raspberry Pi niet bereiken.";
+          // Knoppen weer activeren zodat gebruiker opnieuw kan proberen
+          drinkButtons.forEach(btn => btn.disabled = false);
+          return;
+        });
+
+      // Simuleer voortgangsbalk
       let i = 0;
       const interval = setInterval(() => {
         if (i >= 100) {
           clearInterval(interval);
-          statusText.textContent = `${drink} is klaar! 🍹`;
-          // Na schenken drankknoppen weer aanzetten
+          statusText.textContent = `${drinkName} is klaar! 🍹`;
           drinkButtons.forEach(btn => btn.disabled = false);
         } else {
           i += 5;
