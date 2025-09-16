@@ -27,8 +27,13 @@
       color: #fff;
       transition: 0.3s;
     }
-    button:hover {
+    button:hover:not(:disabled) {
       background: #666;
+    }
+    button:disabled {
+      background: #222;
+      color: #666;
+      cursor: not-allowed;
     }
     #progressBar {
       margin-top: 20px;
@@ -63,6 +68,8 @@
     <button onclick="pour('Whiskey')">Whiskey</button>
     <button onclick="pour('Vodka')">Vodka</button>
     <button onclick="pour('Gin')">Gin</button>
+    <br>
+    <button id="backBtn">⬅️ Terug</button>
   </div>
   
   <!-- Status + Progress bar -->
@@ -77,13 +84,26 @@
     const statusText = document.getElementById('status');
     const progressBar = document.getElementById('progressBar');
     const progress = document.getElementById('progress');
+    const backBtn = document.getElementById('backBtn');
+    const drinkButtons = drinkOptions.querySelectorAll("button:not(#backBtn)");
 
     startBtn.addEventListener('click', () => {
       startBtn.classList.add('hidden');
       drinkOptions.classList.remove('hidden');
     });
 
+    backBtn.addEventListener('click', () => {
+      drinkOptions.classList.add('hidden');
+      statusText.textContent = "";
+      progressBar.classList.add('hidden');
+      progress.style.width = "0%";
+      startBtn.classList.remove('hidden');
+    });
+
     function pour(drink) {
+      // Zet alle drankknoppen uit
+      drinkButtons.forEach(btn => btn.disabled = true);
+
       statusText.textContent = `Aan het schenken: ${drink}...`;
       progressBar.classList.remove('hidden');
       progress.style.width = "0%";
@@ -93,6 +113,8 @@
         if (i >= 100) {
           clearInterval(interval);
           statusText.textContent = `${drink} is klaar! 🍹`;
+          // Na schenken drankknoppen weer aanzetten
+          drinkButtons.forEach(btn => btn.disabled = false);
         } else {
           i += 5;
           progress.style.width = i + "%";
