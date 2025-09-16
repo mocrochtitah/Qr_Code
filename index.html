@@ -1,157 +1,293 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Bartender</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: #111;
-      color: #fff;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      margin-top: 10px;
-      font-size: 2rem;
-    }
-    h2 {
-      font-size: 1.5rem;
-    }
-    .hidden {
-      display: none;
-    }
-    button {
-      display: block;
-      width: 80%;
-      max-width: 300px;
-      margin: 15px auto;
-      padding: 20px;
-      font-size: 1.4rem;
-      border: none;
-      border-radius: 15px;
-      cursor: pointer;
-      background: #444;
-      color: #fff;
-      transition: 0.3s;
-    }
-    button:hover:not(:disabled) {
-      background: #666;
-    }
-    button:disabled {
-      background: #222;
-      color: #666;
-      cursor: not-allowed;
-    }
-    #progressBar {
-      margin-top: 20px;
-      width: 90%;
-      max-width: 400px;
-      height: 35px;
-      background: #333;
-      border-radius: 20px;
-      overflow: hidden;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    #progress {
-      height: 100%;
-      width: 0%;
-      background: limegreen;
-      transition: width 0.3s;
-    }
-    #status {
-      margin-top: 20px;
-      font-size: 1.3rem;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Bartender</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background: #111;
+  color: #fff;
+  margin: 0;
+  padding: 20px;
+}
+h1 { font-size: 2rem; margin-top: 10px; }
+h2 { font-size: 1.5rem; }
+.hidden { display: none; }
+button {
+  display: block;
+  width: 80%;
+  max-width: 300px;
+  margin: 10px auto;
+  padding: 20px;
+  font-size: 1.3rem;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  background: #444;
+  color: #fff;
+  transition: 0.3s;
+}
+button:hover:not(:disabled) { background: #666; }
+button:disabled { background: #222; color: #666; cursor: not-allowed; }
+input {
+  display: block;
+  width: 80%;
+  max-width: 250px;
+  padding: 10px;
+  margin: 10px auto;
+  border-radius: 10px;
+  border: none;
+  font-size: 1.1rem;
+}
+#progressBar {
+  margin-top: 20px;
+  width: 90%;
+  max-width: 400px;
+  height: 35px;
+  background: #333;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-left: auto;
+  margin-right: auto;
+}
+#progress { height: 100%; width: 0%; background: limegreen; transition: width 0.3s; }
+#status { margin-top: 20px; font-size: 1.3rem; }
+#queueList { margin-top: 10px; font-size: 1rem; }
+.drink-info { font-size: 1rem; margin-bottom: 10px; }
+.timer { font-size: 1.2rem; margin-top: 10px; }
+</style>
 </head>
 <body>
-  <h1>Smart Bartender 🍸</h1>
-  
-  <!-- Start knop -->
-  <button id="startBtn">🚀 Start</button>
-  
-  <!-- Drank opties -->
-  <div id="drinkOptions" class="hidden">
-    <h2>Kies je drankje:</h2>
-    <button onclick="pour(1, 'Cola')">🥤 Cola</button>
-    <button onclick="pour(2, 'Fanta')">🥤 Fanta</button>
-    <button onclick="pour(3, 'Sprite')">🥤 Sprite</button>
-    <button onclick="pour(4, 'Whiskey')">🥃 Whiskey</button>
-    <button onclick="pour(5, 'Vodka')">🍸 Vodka</button>
-    <button onclick="pour(6, 'Gin')">🍹 Gin</button>
-    <br>
-    <button id="backBtn">⬅️ Terug</button>
-  </div>
-  
-  <!-- Status + Progress bar -->
-  <p id="status"></p>
-  <div id="progressBar" class="hidden">
-    <div id="progress"></div>
-  </div>
+<h1>Smart Bartender 🍸</h1>
 
-  <script>
-    const PI_URL = "http://raspberrypi.local:5000"; // <-- vervang indien nodig met je Pi IP-adres
+<!-- Start scherm: gebruiker/admin -->
+<div id="startScreen">
+  <button id="userBtn">🍹 Gebruiker</button>
+  <button id="adminBtn">🔧 Admin</button>
+</div>
 
-    const startBtn = document.getElementById('startBtn');
-    const drinkOptions = document.getElementById('drinkOptions');
-    const statusText = document.getElementById('status');
-    const progressBar = document.getElementById('progressBar');
-    const progress = document.getElementById('progress');
-    const backBtn = document.getElementById('backBtn');
-    const drinkButtons = drinkOptions.querySelectorAll("button:not(#backBtn)");
+<!-- Admin login -->
+<div id="adminLogin" class="hidden">
+  <h2>Admin Login</h2>
+  <input type="text" id="username" placeholder="Gebruikersnaam">
+  <input type="password" id="password" placeholder="Wachtwoord">
+  <button id="loginBtn">Login</button>
+  <button id="adminBackBtn">⬅️ Terug</button>
+  <p id="loginStatus"></p>
+</div>
 
-    startBtn.addEventListener('click', () => {
-      startBtn.classList.add('hidden');
-      drinkOptions.classList.remove('hidden');
+<!-- Admin panel -->
+<div id="adminPanel" class="hidden">
+  <h2>Admin Panel</h2>
+  <button onclick="flushPump(1)">Spoel Pomp 1</button>
+  <button onclick="flushPump(2)">Spoel Pomp 2</button>
+  <button onclick="flushPump(3)">Spoel Pomp 3</button>
+  <button onclick="flushPump(4)">Spoel Pomp 4</button>
+  <button onclick="flushPump(5)">Spoel Pomp 5</button>
+  <button onclick="flushPump(6)">Spoel Pomp 6</button>
+  <button onclick="adminLogout()">⬅️ Logout</button>
+  <div id="adminStatus"></div>
+</div>
+
+<!-- Drank opties -->
+<div id="drinkOptions" class="hidden">
+  <h2>Kies je drankje:</h2>
+  <div class="drink-info" id="drinkInfo"></div>
+  <button onclick="confirmDrink(1, 'Cola', '🥤 Frisdrank, lekker koud!')">🥤 Cola</button>
+  <button onclick="confirmDrink(2, 'Fanta', '🥤 Frisdrank, sinaasappel smaak')">🥤 Fanta</button>
+  <button onclick="confirmDrink(3, 'Sprite', '🥤 Frisdrank, citroen-limoen')">🥤 Sprite</button>
+  <button onclick="confirmDrink(4, 'Whiskey', '🥃 Whiskey, 40% alcohol')">🥃 Whiskey</button>
+  <button onclick="confirmDrink(5, 'Vodka', '🍸 Vodka, 40% alcohol')">🍸 Vodka</button>
+  <button onclick="confirmDrink(6, 'Gin', '🍹 Gin, heerlijk met tonic')">🍹 Gin</button>
+  <button id="stopBtn" class="hidden">⏹️ Stop</button>
+  <button id="backBtn">⬅️ Terug</button>
+</div>
+
+<!-- Status + Progress bar -->
+<p id="status"></p>
+<div id="progressBar" class="hidden">
+  <div id="progress"></div>
+</div>
+<div id="timer" class="timer"></div>
+<div id="queueList"></div>
+
+<script>
+const PI_URL = "http://raspberrypi.local:5000"; // Pas aan naar je Pi IP
+
+// Elementen
+const startScreen = document.getElementById("startScreen");
+const userBtn = document.getElementById("userBtn");
+const adminBtn = document.getElementById("adminBtn");
+const adminLogin = document.getElementById("adminLogin");
+const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password");
+const loginBtn = document.getElementById("loginBtn");
+const loginStatus = document.getElementById("loginStatus");
+const adminPanel = document.getElementById("adminPanel");
+const adminStatus = document.getElementById("adminStatus");
+const adminBackBtn = document.getElementById("adminBackBtn");
+
+const drinkOptions = document.getElementById('drinkOptions');
+const backBtn = document.getElementById('backBtn');
+const statusText = document.getElementById('status');
+const progressBar = document.getElementById('progressBar');
+const progress = document.getElementById('progress');
+const drinkButtons = drinkOptions.querySelectorAll("button:not(#backBtn):not(#stopBtn)");
+const stopBtn = document.getElementById("stopBtn");
+const drinkInfo = document.getElementById("drinkInfo");
+const timerDisplay = document.getElementById("timer");
+const queueList = document.getElementById('queueList');
+
+// Queue
+let drinkQueue = [];
+let isPouring = false;
+let currentInterval = null;
+let currentTimeout = null;
+
+// Startscherm keuzes
+userBtn.addEventListener("click", () => {
+  startScreen.classList.add("hidden");
+  drinkOptions.classList.remove("hidden");
+  updateQueueDisplay();
+});
+
+adminBtn.addEventListener("click", () => {
+  startScreen.classList.add("hidden");
+  adminLogin.classList.remove("hidden");
+});
+
+adminBackBtn.addEventListener("click", () => {
+  adminLogin.classList.add("hidden");
+  startScreen.classList.remove("hidden");
+  loginStatus.textContent = "";
+});
+
+loginBtn.addEventListener("click", () => {
+  const user = usernameInput.value;
+  const pass = passwordInput.value;
+  if(user === "admin" && pass === "admin") {
+    adminLogin.classList.add("hidden");
+    adminPanel.classList.remove("hidden");
+    adminStatus.textContent = "";
+  } else {
+    loginStatus.textContent = "❌ Ongeldige login!";
+  }
+});
+
+function adminLogout() {
+  adminPanel.classList.add("hidden");
+  startScreen.classList.remove("hidden");
+}
+
+// Queue systeem
+function queueDrink(drinkId, drinkName){
+  drinkQueue.push({id: drinkId, name: drinkName});
+  updateQueueDisplay();
+  processQueue();
+}
+
+function updateQueueDisplay() {
+  if(drinkQueue.length === 0){
+    queueList.textContent = "";
+  } else {
+    queueList.innerHTML = "Queue: " + drinkQueue.map((d,i) => `#${i+1} ${d.name}`).join(" → ");
+  }
+}
+
+// Bevestiging en info
+function confirmDrink(drinkId, drinkName, info){
+  if(confirm(`Weet je zeker dat je ${drinkName} wilt schenken?`)){
+    drinkInfo.textContent = info;
+    queueDrink(drinkId, drinkName);
+  }
+}
+
+// Stop knop
+stopBtn.addEventListener("click", () => {
+  if(currentInterval) clearInterval(currentInterval);
+  if(currentTimeout) clearTimeout(currentTimeout);
+  statusText.textContent = "Bestelling gestopt ❌";
+  progress.style.width = "0%";
+  timerDisplay.textContent = "";
+  isPouring = false;
+  stopBtn.classList.add("hidden");
+  drinkButtons.forEach(btn => btn.disabled = false);
+  processQueue();
+});
+
+function processQueue(){
+  if(isPouring || drinkQueue.length===0) return;
+  isPouring = true;
+  const nextDrink = drinkQueue.shift();
+  updateQueueDisplay();
+
+  drinkButtons.forEach(btn => btn.disabled = true);
+  stopBtn.classList.remove("hidden");
+  statusText.textContent = `Aan het schenken: ${nextDrink.name}...`;
+  progressBar.classList.remove('hidden');
+  progress.style.width = "0%";
+
+  // Commando naar Pi
+  fetch(`${PI_URL}/pour/${nextDrink.id}`)
+    .then(resp => resp.json())
+    .then(data => console.log("Pi antwoord:", data))
+    .catch(err => {
+      console.error("Fout met Pi:", err);
+      statusText.textContent = "❌ Pi niet bereikbaar";
+      isPouring = false;
+      drinkButtons.forEach(btn => btn.disabled = false);
+      stopBtn.classList.add("hidden");
+      processQueue();
+      return;
     });
 
-    backBtn.addEventListener('click', () => {
-      drinkOptions.classList.add('hidden');
-      statusText.textContent = "";
-      progressBar.classList.add('hidden');
-      progress.style.width = "0%";
-      startBtn.classList.remove('hidden');
+  // Timer + voortgang
+  let seconds = 10; // totale schenktijd
+  progress.style.width = "0%";
+  timerDisplay.textContent = `Klaar in: ${seconds}s`;
+  currentInterval = setInterval(()=>{
+    seconds--;
+    timerDisplay.textContent = `Klaar in: ${seconds}s`;
+    progress.style.width = `${(10-seconds)*10}%`;
+    if(seconds<=0) clearInterval(currentInterval);
+  },1000);
+
+  currentTimeout = setTimeout(()=>{
+    statusText.textContent = `${nextDrink.name} is klaar! 🍹`;
+    timerDisplay.textContent = "";
+    progress.style.width = "100%";
+    isPouring = false;
+    stopBtn.classList.add("hidden");
+    drinkButtons.forEach(btn => btn.disabled = false);
+    processQueue();
+  }, 10000);
+}
+
+backBtn.addEventListener('click', () => {
+  drinkOptions.classList.add('hidden');
+  statusText.textContent = "";
+  progressBar.classList.add('hidden');
+  progress.style.width = "0%";
+  timerDisplay.textContent = "";
+  startScreen.classList.remove('hidden');
+});
+
+// Admin pomp spoelen
+function flushPump(pumpId){
+  fetch(`${PI_URL}/pour/${pumpId}`) // zelfde endpoint, korte duration op Pi
+    .then(resp => resp.json())
+    .then(data => {
+      adminStatus.textContent = `Pomp ${pumpId} gespoeld ✅`;
+      console.log(data);
+    })
+    .catch(err => {
+      adminStatus.textContent = `❌ Fout bij spoelen pomp ${pumpId}`;
+      console.error(err);
     });
-
-    function pour(drinkId, drinkName) {
-      // Zet alle drankknoppen uit
-      drinkButtons.forEach(btn => btn.disabled = true);
-
-      statusText.textContent = `Aan het schenken: ${drinkName}...`;
-      progressBar.classList.remove('hidden');
-      progress.style.width = "0%";
-
-      // Stuur commando naar Raspberry Pi
-      fetch(`${PI_URL}/pour/${drinkId}`)
-        .then(response => response.json())
-        .then(data => {
-          console.log("Antwoord van Pi:", data);
-        })
-        .catch(err => {
-          console.error("Fout bij verbinden met Pi:", err);
-          statusText.textContent = "❌ Fout: kon Raspberry Pi niet bereiken.";
-          // Knoppen weer activeren zodat gebruiker opnieuw kan proberen
-          drinkButtons.forEach(btn => btn.disabled = false);
-          return;
-        });
-
-      // Simuleer voortgangsbalk
-      let i = 0;
-      const interval = setInterval(() => {
-        if (i >= 100) {
-          clearInterval(interval);
-          statusText.textContent = `${drinkName} is klaar! 🍹`;
-          drinkButtons.forEach(btn => btn.disabled = false);
-        } else {
-          i += 5;
-          progress.style.width = i + "%";
-        }
-      }, 200);
-    }
-  </script>
+}
+</script>
 </body>
 </html>
