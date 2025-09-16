@@ -16,6 +16,26 @@ input{display:block;width:80%;max-width:250px;padding:10px;margin:10px auto;bord
 #queueList{margin-top:10px;font-size:1rem;}
 .drink-info{font-size:1rem;margin-bottom:10px;}
 .timer{font-size:1.2rem;margin-top:10px;}
+
+/* Glas animatie */
+#glassContainer {
+  width: 100px;
+  height: 200px;
+  border: 4px solid #fff;
+  border-radius: 0 0 20px 20px;
+  position: relative;
+  margin: 20px auto;
+  overflow: hidden;
+  background: transparent;
+}
+#liquid {
+  width: 100%;
+  height: 0%;
+  background: #1E90FF;
+  position: absolute;
+  bottom: 0;
+  transition: height 1s linear;
+}
 </style>
 </head>
 <body>
@@ -61,14 +81,19 @@ input{display:block;width:80%;max-width:250px;padding:10px;margin:10px auto;bord
 <div id="drinkOptions" class="hidden">
   <h2>Kies je drankje:</h2>
   <div class="drink-info" id="drinkInfo"></div>
-  <button onclick="confirmDrink(1, 'Cola', '🥤 Frisdrank, lekker koud!')">🥤 Cola</button>
-  <button onclick="confirmDrink(2, 'Fanta', '🥤 Frisdrank, sinaasappel smaak')">🥤 Fanta</button>
-  <button onclick="confirmDrink(3, 'Sprite', '🥤 Frisdrank, citroen-limoen')">🥤 Sprite</button>
-  <button onclick="confirmDrink(4, 'Whiskey', '🥃 Whiskey, 40% alcohol')">🥃 Whiskey</button>
-  <button onclick="confirmDrink(5, 'Vodka', '🍸 Vodka, 40% alcohol')">🍸 Vodka</button>
-  <button onclick="confirmDrink(6, 'Gin', '🍹 Gin, heerlijk met tonic')">🍹 Gin</button>
+  <button onclick="confirmDrink(1, 'Cola', '🥤 Frisdrank, lekker koud!', '#8B4513')">🥤 Cola</button>
+  <button onclick="confirmDrink(2, 'Fanta', '🥤 Frisdrank, sinaasappel smaak', '#FFA500')">🥤 Fanta</button>
+  <button onclick="confirmDrink(3, 'Sprite', '🥤 Frisdrank, citroen-limoen', '#CCFFCC')">🥤 Sprite</button>
+  <button onclick="confirmDrink(4, 'Whiskey', '🥃 Whiskey, 40% alcohol', '#D2691E')">🥃 Whiskey</button>
+  <button onclick="confirmDrink(5, 'Vodka', '🍸 Vodka, 40% alcohol', '#B0E0E6')">🍸 Vodka</button>
+  <button onclick="confirmDrink(6, 'Gin', '🍹 Gin, heerlijk met tonic', '#ADD8E6')">🍹 Gin</button>
   <button id="stopBtn" class="hidden">⏹️ Stop</button>
   <button id="backBtn">⬅️ Terug</button>
+</div>
+
+<!-- Glas animatie -->
+<div id="glassContainer" class="hidden">
+  <div id="liquid"></div>
 </div>
 
 <!-- Status + Progress -->
@@ -79,7 +104,7 @@ input{display:block;width:80%;max-width:250px;padding:10px;margin:10px auto;bord
 
 <script>
 // Testmodus: Pi niet nodig
-let PI_URL = null; // zet hier je Pi IP in als beschikbaar
+let PI_URL = null;
 
 // Elementen
 const startScreen=document.getElementById("startScreen"), userBtn=document.getElementById("userBtn"), adminBtn=document.getElementById("adminBtn"),
@@ -91,10 +116,12 @@ progressBar=document.getElementById('progressBar'), progress=document.getElement
 drinkButtons=drinkOptions.querySelectorAll("button:not(#backBtn):not(#stopBtn)"), stopBtn=document.getElementById("stopBtn"),
 drinkInfo=document.getElementById("drinkInfo"), timerDisplay=document.getElementById("timer"), queueList=document.getElementById('queueList'),
 currentPiIpSpan=document.getElementById("currentPiIp"), newPiIpInput=document.getElementById("newPiIp"), setPiBtn=document.getElementById("setPiBtn"),
-testPiBtn=document.getElementById("testPiBtn"), piStatus=document.getElementById("piStatus");
+testPiBtn=document.getElementById("testPiBtn"), piStatus=document.getElementById("piStatus"),
+glass=document.getElementById("glassContainer"), liquid=document.getElementById("liquid");
 
 // Queue
 let drinkQueue=[], isPouring=false, currentInterval=null, currentTimeout=null;
+let currentDrinkColor="#1E90FF";
 
 // Startscherm
 userBtn.addEventListener("click",()=>{startScreen.classList.add("hidden"); drinkOptions.classList.remove("hidden"); updateQueueDisplay();});
@@ -108,14 +135,15 @@ loginBtn.addEventListener("click",()=>{
 function adminLogout(){adminPanel.classList.add("hidden"); startScreen.classList.remove("hidden");}
 
 // Queue systeem
-function queueDrink(drinkId, drinkName){drinkQueue.push({id:drinkId,name:drinkName}); updateQueueDisplay(); processQueue();}
+function queueDrink(drinkId, drinkName){drinkQueue.push({id:drinkId,name:drinkName,color:currentDrinkColor}); updateQueueDisplay(); processQueue();}
 function updateQueueDisplay(){queueList.textContent = drinkQueue.length===0?"": "Queue: " + drinkQueue.map((d,i)=>`#${i+1} ${d.name}`).join(" → ");}
 
 // Drank keuze
-function confirmDrink(drinkId,drinkName,info){
+function confirmDrink(drinkId,drinkName,info,color){
     if(isPouring){alert("Er wordt al een drankje geschonken! Wacht tot het klaar is."); return;}
     if(confirm(`Weet je zeker dat je ${drinkName} wilt schenken?`)){
         drinkInfo.textContent=info;
+        currentDrinkColor=color || "#1E90FF";
         drinkButtons.forEach(btn=>btn.disabled=true);
         queueDrink(drinkId,drinkName);
     }
@@ -126,20 +154,28 @@ stopBtn.addEventListener("click",()=>{
     if(currentInterval) clearInterval(currentInterval);
     if(currentTimeout) clearTimeout(currentTimeout);
     statusText.textContent="Bestelling gestopt ❌"; progress.style.width="0%"; timerDisplay.textContent="";
+    liquid.style.height="0%"; glass.classList.add('hidden');
     isPouring=false; stopBtn.classList.add("hidden"); drinkButtons.forEach(btn=>btn.disabled=false);
     processQueue();
 });
 
-// Process queue
+// Process queue met glas animatie
 function processQueue(){
     if(isPouring || drinkQueue.length===0) return;
     isPouring=true;
     const nextDrink=drinkQueue.shift();
     updateQueueDisplay();
+
     drinkButtons.forEach(btn=>btn.disabled=true);
     stopBtn.classList.remove("hidden");
     statusText.textContent=`Aan het schenken: ${nextDrink.name}...`;
-    progressBar.classList.remove("hidden"); progress.style.width="0%";
+    progressBar.classList.remove("hidden"); 
+    progress.style.width="0%";
+
+    // Glas animatie
+    liquid.style.height="0%";
+    liquid.style.background = nextDrink.color || "#1E90FF";
+    glass.classList.remove("hidden");
 
     if(PI_URL){
         fetch(`${PI_URL}/pour/${nextDrink.id}`).then(r=>r.json()).then(d=>console.log(d)).catch(err=>console.error(err));
@@ -149,24 +185,33 @@ function processQueue(){
     if(currentInterval) clearInterval(currentInterval);
     if(currentTimeout) clearTimeout(currentTimeout);
     timerDisplay.textContent=`Klaar in: ${seconds}s`;
-    currentInterval=setInterval(()=>{
+
+    currentInterval = setInterval(()=>{
         seconds--;
-        if(seconds>=0){timerDisplay.textContent=`Klaar in: ${seconds}s`; progress.style.width=`${(10-seconds)*10}%`;}
+        if(seconds>=0){
+            timerDisplay.textContent=`Klaar in: ${seconds}s`;
+            progress.style.width=`${(10-seconds)*10}%`;
+            liquid.style.height = `${((10-seconds)/10)*100}%`;
+        }
     },1000);
-    currentTimeout=setTimeout(()=>{
+
+    currentTimeout = setTimeout(()=>{
         clearInterval(currentInterval);
         statusText.textContent=`${nextDrink.name} is klaar! 🍹`;
         timerDisplay.textContent="";
         progress.style.width="100%";
+        liquid.style.height="100%";
         isPouring=false;
         stopBtn.classList.add("hidden");
         drinkButtons.forEach(btn=>btn.disabled=false);
+        setTimeout(()=>glass.classList.add('hidden'),1000); // verberg na 1s
         processQueue();
     },10000);
 }
 
+// Back knop
 backBtn.addEventListener('click',()=>{
-    drinkOptions.classList.add('hidden'); statusText.textContent=""; progressBar.classList.add('hidden'); progress.style.width="0%"; timerDisplay.textContent=""; startScreen.classList.remove('hidden');
+    drinkOptions.classList.add('hidden'); statusText.textContent=""; progressBar.classList.add('hidden'); progress.style.width="0%"; timerDisplay.textContent=""; glass.classList.add('hidden'); startScreen.classList.remove('hidden');
 });
 
 // Admin functies
@@ -182,22 +227,15 @@ setPiBtn.addEventListener("click",()=>{
     if(newIp){PI_URL=newIp; updateCurrentPiIp(); piStatus.textContent=`✅ IP aangepast naar ${PI_URL}`;}
     else piStatus.textContent="⚠️ Vul een geldig IP in";
 });
-  
 testPiBtn.addEventListener("click",()=>{
-    if(!PI_URL){ 
-        piStatus.textContent="⚠️ Pi IP is niet ingesteld"; 
-        return; 
-    }
-    fetch(`${PI_URL}/ping`)
-        .then(resp=>resp.json())
-        .then(data=>{
-            piStatus.textContent="✅ Pi reageert!";
-            console.log("Pi ping antwoord:", data);
-        })
-        .catch(err=>{
-            piStatus.textContent="❌ Pi niet bereikbaar";
-            console.error(err);
-        });
+    if(!PI_URL){piStatus.textContent="⚠️ Pi IP is niet ingesteld"; return;}
+    fetch(`${PI_URL}/ping`).then(resp=>resp.json()).then(data=>{
+        piStatus.textContent="✅ Pi reageert!";
+        console.log("Pi ping antwoord:", data);
+    }).catch(err=>{
+        piStatus.textContent="❌ Pi niet bereikbaar";
+        console.error(err);
+    });
 });
 </script>
 </body>
