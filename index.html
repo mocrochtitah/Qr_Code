@@ -27,6 +27,7 @@ input{display:block;width:80%;max-width:250px;padding:10px;margin:10px auto;bord
   margin: 20px auto;
   overflow: hidden;
   background: transparent;
+  z-index: 10; /* boven andere elementen*/
 }
 #liquid {
   width: 100%;
@@ -92,7 +93,7 @@ input{display:block;width:80%;max-width:250px;padding:10px;margin:10px auto;bord
 </div>
 
 <!-- Glas animatie -->
-<div id="glassContainer" class="hidden">
+<div id="glassContainer">
   <div id="liquid"></div>
 </div>
 
@@ -173,9 +174,15 @@ function processQueue(){
     progress.style.width="0%";
 
     // Glas animatie
-    liquid.style.height="0%";
+    liquid.style.height= `${((10-seconds)/10)*100}%`;
     liquid.style.background = nextDrink.color || "#1E90FF";
     glass.classList.remove("hidden");
+
+    // begin van proces
+    glass.style.display = "block";
+
+    // einde proces
+    setTimeout(()=>glass.style.display="none",1000);
 
     if(PI_URL){
         fetch(`${PI_URL}/pour/${nextDrink.id}`).then(r=>r.json()).then(d=>console.log(d)).catch(err=>console.error(err));
