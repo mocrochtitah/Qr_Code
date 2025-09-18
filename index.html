@@ -98,7 +98,7 @@ input {
 
 <script>
 // Pi IP vast in code
-let PI_URL = "192.168.141.224:5000"; // eenmalig ingesteld
+let PI_URL = "http://192.168.141.224:5000"; // eenmalig ingesteld
 
 // Elementen
 const startScreen = document.getElementById("startScreen");
@@ -172,8 +172,20 @@ function processQueue(){
     progressBar.classList.remove("hidden"); progress.style.width="0%";
 
     if(PI_URL){
-        fetch(`${PI_URL}/pour/${nextDrink.id}`).then(r=>r.json()).then(d=>console.log(d)).catch(err=>console.error(err));
-    }
+    fetch(`${PI_URL}/pour/${nextDrink.id}`)
+    .then(r => r.json())
+    .then(d => {
+        console.log(d); // browser-console log
+        statusText.textContent = `Aan het schenken: ${nextDrink.name} ✅`; // feedback
+    })
+    .catch(err => {
+        console.error(err);
+        statusText.textContent = `❌ Fout bij schenken ${nextDrink.name}`;
+    });
+} else {
+    statusText.textContent = `Simulatie: ${nextDrink.name} geserveerd ✅`;
+}
+
 
     let seconds=10;
     if(currentInterval) clearInterval(currentInterval);
@@ -210,8 +222,20 @@ backBtn.addEventListener('click',()=>{
 
 // Admin functies
 function flushPump(pumpId){
-    if(PI_URL){fetch(`${PI_URL}/flush/${pumpId}`).then(r=>r.json()).then(d=>console.log(d)).catch(err=>console.error(err));}
-    else adminStatus.textContent=`Simulatie: Pomp ${pumpId} gespoeld ✅`;
+    if(PI_URL){
+        fetch(`${PI_URL}/flush/${pumpId}`)
+        .then(r => r.json())  // verwacht JSON van Pi
+        .then(d => {
+            console.log(d); // browser-console log
+            adminStatus.textContent = `✅ Pomp ${pumpId} gespoeld`; // admin-panel feedback
+        })
+        .catch(err => {
+            console.error(err);
+            adminStatus.textContent = `❌ Fout bij Pomp ${pumpId}`;
+        });
+    } else {
+        adminStatus.textContent=`Simulatie: Pomp ${pumpId} gespoeld ✅`;
+    }
 }
 </script>
 </body>
