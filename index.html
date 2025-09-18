@@ -151,13 +151,23 @@ function processQueue(){
     timerDisplay.textContent=`Klaar in: ${seconds}s`;
     currentInterval=setInterval(()=>{
         seconds--;
-        if(seconds>=0){timerDisplay.textContent=`Klaar in: ${seconds}s`; progress.style.width=`${(10-seconds)*10}%`;}
+        if(seconds>=0){
+            timerDisplay.textContent=`Klaar in: ${seconds}s`;
+            progress.style.width=`${(10-seconds)*10}%`;
+        }
     },1000);
     currentTimeout=setTimeout(()=>{
         clearInterval(currentInterval);
         statusText.textContent=`${nextDrink.name} is klaar! 🍹`;
         timerDisplay.textContent="";
         progress.style.width="100%";
+
+        // Reset progress balk na 2 sec
+        setTimeout(()=>{
+            progress.style.width="0%";
+            progressBar.classList.add("hidden");
+        }, 2000);
+
         isPouring=false;
         stopBtn.classList.add("hidden");
         drinkButtons.forEach(btn=>btn.disabled=false);
@@ -182,8 +192,6 @@ setPiBtn.addEventListener("click",()=>{
     if(newIp){PI_URL=newIp; updateCurrentPiIp(); piStatus.textContent=`✅ IP aangepast naar ${PI_URL}`;}
     else piStatus.textContent="⚠️ Vul een geldig IP in";
 });
-  testPiBtn.addEventListener("click",()=>{
-  
 testPiBtn.addEventListener("click",()=>{
     if(!PI_URL){ 
         piStatus.textContent="⚠️ Pi IP is niet ingesteld"; 
