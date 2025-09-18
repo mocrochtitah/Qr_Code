@@ -210,7 +210,7 @@ backBtn.addEventListener('click',()=>{
 
 // Admin functies
 function flushPump(pumpId){
-    if(PI_URL){fetch(`${PI_URL}/pour/${pumpId}`).then(r=>r.json()).then(d=>console.log(d)).catch(err=>console.error(err));}
+    if(PI_URL){fetch(`${PI_URL}/flush/${pumpId}`).then(r=>r.json()).then(d=>console.log(d)).catch(err=>console.error(err));}
     else adminStatus.textContent=`Simulatie: Pomp ${pumpId} gespoeld ✅`;
 }
 </script>
