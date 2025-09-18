@@ -25,7 +25,6 @@ button{
 }
 button:hover:not(:disabled){background:#666;} 
 button:disabled{background:#222;color:#666;cursor:not-allowed;}
-/* Input styling voor admin login */
 input {
     display: block;
     width: 80%;
@@ -98,7 +97,7 @@ input {
 
 <script>
 // Pi IP vast in code
-let PI_URL = "http://192.168.141.224:5000"; // eenmalig ingesteld
+let PI_URL = "http://192.168.141.224:5000";
 
 // Elementen
 const startScreen = document.getElementById("startScreen");
@@ -132,8 +131,13 @@ adminBtn.addEventListener("click",()=>{startScreen.classList.add("hidden"); admi
 adminBackBtn.addEventListener("click",()=>{adminLogin.classList.add("hidden"); startScreen.classList.remove("hidden"); loginStatus.textContent="";});
 loginBtn.addEventListener("click",()=>{
     const user=usernameInput.value, pass=passwordInput.value;
-    if(user==="admin"&&pass==="admin"){adminLogin.classList.add("hidden"); adminPanel.classList.remove("hidden"); adminStatus.textContent="";}
-    else loginStatus.textContent="❌ Ongeldige login!";
+    if(user==="admin"&&pass==="admin"){
+        adminLogin.classList.add("hidden");
+        adminPanel.classList.remove("hidden");
+        adminStatus.textContent="";
+    } else {
+        loginStatus.textContent="❌ Ongeldige login!";
+    }
 });
 function adminLogout(){adminPanel.classList.add("hidden"); startScreen.classList.remove("hidden");}
 
@@ -168,24 +172,22 @@ function processQueue(){
     updateQueueDisplay();
     drinkButtons.forEach(btn=>btn.disabled=true);
     stopBtn.classList.remove("hidden");
-    statusText.textContent=`Aan het schenken: ${nextDrink.name}...`;
     progressBar.classList.remove("hidden"); progress.style.width="0%";
-
+    
     if(PI_URL){
-    fetch(`${PI_URL}/pour/${nextDrink.id}`)
-    .then(r => r.json())
-    .then(d => {
-        console.log(d); // browser-console log
-        statusText.textContent = `Aan het schenken: ${nextDrink.name} ✅`; // feedback
-    })
-    .catch(err => {
-        console.error(err);
-        statusText.textContent = `❌ Fout bij schenken ${nextDrink.name}`;
-    });
-} else {
-    statusText.textContent = `Simulatie: ${nextDrink.name} geserveerd ✅`;
-}
-
+        fetch(`${PI_URL}/pour/${nextDrink.id}`)
+        .then(r=>r.json())
+        .then(d=>{
+            console.log(d);
+            statusText.textContent = `Aan het schenken: ${nextDrink.name} ✅`;
+        })
+        .catch(err=>{
+            console.error(err);
+            statusText.textContent = `❌ Fout bij schenken ${nextDrink.name}`;
+        });
+    } else {
+        statusText.textContent = `Simulatie: ${nextDrink.name} geserveerd ✅`;
+    }
 
     let seconds=10;
     if(currentInterval) clearInterval(currentInterval);
@@ -200,15 +202,7 @@ function processQueue(){
     },1000);
     currentTimeout=setTimeout(()=>{
         clearInterval(currentInterval);
-        statusText.textContent=`${nextDrink.name} is klaar! 🍹`;
-        timerDisplay.textContent="";
         progress.style.width="100%";
-
-        setTimeout(()=>{
-            progress.style.width="0%";
-            progressBar.classList.add("hidden");
-        }, 2000);
-
         isPouring=false;
         stopBtn.classList.add("hidden");
         drinkButtons.forEach(btn=>btn.disabled=false);
@@ -224,12 +218,12 @@ backBtn.addEventListener('click',()=>{
 function flushPump(pumpId){
     if(PI_URL){
         fetch(`${PI_URL}/flush/${pumpId}`)
-        .then(r => r.json())  // verwacht JSON van Pi
-        .then(d => {
-            console.log(d); // browser-console log
-            adminStatus.textContent = `✅ Pomp ${pumpId} gespoeld`; // admin-panel feedback
+        .then(r=>r.json())
+        .then(d=>{
+            console.log(d);
+            adminStatus.textContent = `✅ Pomp ${pumpId} gespoeld`;
         })
-        .catch(err => {
+        .catch(err=>{
             console.error(err);
             adminStatus.textContent = `❌ Fout bij Pomp ${pumpId}`;
         });
